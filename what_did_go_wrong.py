@@ -6,11 +6,12 @@ import numpy as np
 import json
 from numpy import asarray
 from numpy import savetxt
-
+import processing
 bs = cv2.createBackgroundSubtractorMOG2()
 training = True
 
-
+process = processing.Process("predict")
+lev_neu = process.levels
 crop = [20,404, 326,412]#[27,404, 326,412]
 
 green_iamges =  os.listdir("collected_images/green")
@@ -71,7 +72,7 @@ for color_pointer in range(0,3):
     for image_name in current_images:
         print(image_name)
 
-        frame = cv2.imread(path + image_name)#[crop[0]:crop[1], crop[2]:crop[3]]
+        frame = cv2.imread(path + image_name)[crop[0]:crop[1], crop[2]:crop[3]]
         frame_c = frame
         # Bild verarbeiten
         gray_image = cv2.cvtColor(frame_c, cv2.COLOR_BGR2GRAY)
@@ -86,8 +87,13 @@ for color_pointer in range(0,3):
         beta = 10 # Brightness control (0-100)
         adjusted = frame_c 
         # get color values form image
-        values, cords, average_background = image_processing.get_data(empty_image, frame_c, adjusted, crop, show_option=0, last_frame=cv2.imread(empty_image)[crop[0]:crop[1], crop[2]:crop[3]])
-        
+        values, cords, average_background = image_processing.get_data(empty_image, frame_c, adjusted, crop)# show_option=0, last_frame=cv2.imread(empty_image)[crop[0]:crop[1], crop[2]:crop[3]])
+        process.count_obj_by_position(cords[0], color)
+        levels = process.levels()
+        if not lev_neu == levels:
+            print(levels)
+        lev_neu = levels
+            
         print(values)
         
 

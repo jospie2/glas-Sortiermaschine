@@ -13,7 +13,7 @@ class Serial_Driver:
         if not testing_without_connection:
             self.ser = serial.Serial(port, baudrate=115200)
         self.data_recived = {}
-        self.start_process = False
+        self.start_process = True
     
     
     def send(self, data):

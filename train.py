@@ -55,15 +55,15 @@ for color_pointer in range(0,3):
     match color_pointer:
         case 0:
             current_images = green_iamges
-            path = "training_data/green/"
+            path = "training_data/green/" # 162,149,130; 147,133,113; 152,139,120; 
             color = "green"
         case 1:
             current_images = white_iamges
-            path = "training_data/white/"
+            path = "training_data/white/" #
             color = "white"
         case 2:
             current_images = brown_iamges
-            path = "training_data/brown/"
+            path = "training_data/brown/" # 
             color = "brown"
 
     empty_image = "training_data/empty.jpg"

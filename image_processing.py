@@ -68,32 +68,24 @@ def chroma_key(frame, ref, accu):
     cv2.imshow("chroma", final)
     return final
 
-def get_data(empty_image_path, frame, contrast, crop, show_option = 0, last_frame =None):
-    empty_image = last_frame #cv2.imread(empty_image_path)[crop[0]:crop[1], crop[2]:crop[3]]
+def get_data(empty_image, frame, contrast, crop):
+    empty_image = empty_image
     #print(empty_image.shape[:2], frame.shape[:2])
-    # beide in Scharzweiß umandeln
-    empty_gray = cv2.cvtColor(empty_image, cv2.COLOR_BGR2GRAY)
-    object_gray = frame#cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     # Differenz der Bilder errechnen
-    #diff = cv2.absdiff(empty_gray, object_gray)
-    diff = chroma_key(object_gray, [107, 94, 77], 55)
+
+    diff = result = chroma_key(frame, [107, 94, 77], 55)
     cv2.imshow("diff,color", diff)
     diff = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-    #diff = cv2.absdiff(empty_gray, diff)
+
     cv2.imshow("chroma, grey", diff)
     # Schwellenwert anwenden
     _, thresholded = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
     # Konturen finden
     contours, _ = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # Maske erstellen
-    mask = np.zeros_like(empty_image)
-    cv2.drawContours(mask, contours, -1, (255, 255, 255), thickness=cv2.FILLED)
-
+    cv2.drawContours(result, contours, -1, (255, 255, 255), thickness=cv2.FILLED)
     # Die Maske auf das Bild anwenden
-    result = cv2.bitwise_and(contrast, mask)
-
 
     # Ergebniss in rot gruen und Blau kanäle aufteilen
     blue, green, red = cv2.split(result)
@@ -149,12 +141,7 @@ def get_data(empty_image_path, frame, contrast, crop, show_option = 0, last_fram
     cv2.imshow("orig", frame)
     cv2.imshow('Result', result)
     cv2.imshow('contrast', contrast)
-    if show_option >= 0:
-        pass
-    if show_option == 1:
-        cv2.imshow("red  ", red_mask)
-        cv2.imshow("yellow  ", yellow_mask)
-        cv2.imshow("blue  ", blue_mask)
+
     average_color = [[],[]]
     #print(values)
     average_color[0].append([int(rounde) for rounde in cv2.mean(empty_image)[:3]])

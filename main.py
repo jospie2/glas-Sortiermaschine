@@ -8,6 +8,7 @@ import sort_driver
 
 training = True
 process = Process("predict")
+lev_neu = process.levels
 driver = sort_driver.Serial_Driver("COM17")
 time.sleep(4)
 driver.send({"type": "home"})
@@ -56,10 +57,10 @@ last_detected_color = None
 current_detected_color = None 
 last_color_send = "white"
 print(current_feeder)
-take_image = SetWait(5, seconds=True)
-for multiplier in range(2,4):
-    driver.change_band_data(state= 1, speed= 1000*multiplier)
-    time.sleep(2)
+take_image = SetWait(3, seconds=True)
+#for multiplier in range(2,4):
+driver.change_band_data(state= 1, speed= 3000)
+#    time.sleep(2)
 
 def handel_feeders():
     global current_feeder
@@ -181,56 +182,64 @@ while True:
     ret, frame = cap.read()
     if not pic_taken and take_image.time_up():
         cv2.imwrite("empty.jpg", frame)
-        last_frame = adjusted = frame[crop[0]:crop[1], crop[2]:crop[3]]
+        last_frame = empty_band = adjusted = frame[crop[0]:crop[1], crop[2]:crop[3]]
         print(crop, current_feeder)
         pic_taken = True
-    if running:
-        
-        handle_slides()
-        if pic_taken:
-            # Frame aufnehmen        
-            frame_c = frame[crop[0]:crop[1], crop[2]:crop[3]]
-            # Bild verarbeiten
-            gray_image = cv2.cvtColor(frame_c, cv2.COLOR_BGR2GRAY)
-            close_to_black_mask = gray_image < 70
-            lab_image = cv2.cvtColor(frame_c, cv2.COLOR_BGR2LAB)
-            l, a, b = cv2.split(lab_image)
-            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-            cl = clahe.apply(l)
-            enhanced_lab_image = cv2.merge((cl, a, b))
-            frame_c = cv2.cvtColor(enhanced_lab_image, cv2.COLOR_LAB2BGR)
-            alpha = 1.5 # Contrast control (1.0-3.0)
-            beta = 10 # Brightness control (0-100)
-            adjusted = frame_c 
-            # get color values form image
-            values, cords, average_background = image_processing.get_data(empty_image, frame_c, adjusted, crop, show_option=0, last_frame=last_frame)
-            #wenn es Werte gibt, weiter machen
-            if not len(values) == 0 and not len(values[0])  == 0:
-                prediction, certainty = process.predict(values)
-                # wenn die erkennung wahrscheinlich richtig ist, dann weiter machen 
-                if certainty < 50 and not last_color == prediction and ((prediction == "white" and average_background[1] > 150) or (not prediction == "white" and average_background[1] > 100)):
-                    save_image(frame[crop[0]:crop[1], crop[2]:crop[3]], prediction, certainty) # frame_c um bild mit Erkennungmarkierungen zu speichern
-                    cv2.imshow("last", frame_c)
 
-                    print('\033[94m' + "color: " +  prediction + " certaity: " + str(certainty)  + " info: "+ str(average_background) +'\033[0m') 
-                    current_detected_color = prediction
-                    handle_slides()# Rutsche aufrufen
-                    last_color = prediction # erkannte Farbe als lezte speichern
-                else:
-                    pass
-                if last_color == prediction:
-                    #print(prediction, str(certainty))
-                    pass
-            last_frame = frame_c
-            if not ret:
-                break
+
+    handle_slides()
+    if pic_taken:
+        # Frame aufnehmen
+        frame_c = frame[crop[0]:crop[1], crop[2]:crop[3]]
+        # Bild verarbeiten
+        gray_image = cv2.cvtColor(frame_c, cv2.COLOR_BGR2GRAY)
+        close_to_black_mask = gray_image < 70
+        lab_image = cv2.cvtColor(frame_c, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab_image)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        cl = clahe.apply(l)
+        enhanced_lab_image = cv2.merge((cl, a, b))
+        frame_c = cv2.cvtColor(enhanced_lab_image, cv2.COLOR_LAB2BGR)
+        alpha = 1.5 # Contrast control (1.0-3.0)
+        beta = 10 # Brightness control (0-100)
+        adjusted = frame_c
+        # get color values form image                                   empty_band
+        values, cords, average_background = image_processing.get_data(last_frame, frame_c, adjusted, crop)
+        
+        #wenn es Werte gibt, weiter machen
+        if not len(values) == 0 and not len(values[0])  == 0:
+            prediction, certainty = process.predict(values)
+            #print(cords[0])
+            if certainty < 50 and ((prediction == "white" and average_background[1] > 150) or (not prediction == "white" and average_background[1] > 100)):
+                process.count_obj_by_position(prediction, cords[0])
+            levels = process.levels
+            if not lev_neu == levels:
+                print(levels)
+            lev_neu = levels
+            # wenn die erkennung wahrscheinlich richtig ist, dann weiter machen
+            if certainty < 50 and not last_color == prediction and ((prediction == "white" and average_background[1] > 150) or (not prediction == "white" and average_background[1] > 100)):
+                save_image(frame[crop[0]:crop[1], crop[2]:crop[3]], prediction, certainty) # frame_c um bild mit Erkennungmarkierungen zu speichern
+                cv2.imshow("last", frame_c)
+
+                print('\033[94m' + "color: " +  prediction + " certaity: " + str(certainty)  + " info: "+ str(average_background) +'\033[0m')
+                current_detected_color = prediction
+                handle_slides()# Rutsche aufrufen
+                last_color = prediction # erkannte Farbe als lezte speichern
+            else:
+                pass
+            if last_color == prediction:
+                #print(prediction, str(certainty))
+                pass
+        last_frame = frame_c
+        if not ret:
+            break
             
-    else:
-        driver.ask_for_data()
-        response = driver.data_recived
-        if "buttonState" in response and response["buttonState"]:
-            running = True
-            feeder_running = True
+    #else:
+    #    driver.ask_for_data()
+    #    response = driver.data_recived
+    #    if "buttonState" in response and response["buttonState"]:
+    #        running = True
+    #        feeder_running = True
 
     
     if cv2.waitKey(1) & 0xFF == ord('q'):

@@ -7,8 +7,11 @@ class Process:
     def __init__(self, mode) -> None:
         self.mode = mode
         self.colors = ["green", "white", "brown"]
-
+        self.positions = [0]
+        self.levels = {"green": 0, "white": 0, "brown": 0}
+        self.current_color = "white"
         data = [[],[],[]]
+         
         if self.mode == "predict":
             for color_pointy in range(len(self.colors)):
                 #print(self.colors[color_pointy])
@@ -19,7 +22,15 @@ class Process:
         self.data = data
 
 
-
+    def count_obj_by_position(self, color, cord):
+        if (self.positions[-1] > cord and self.current_color == color) or not self.current_color == color:
+            self.levels[self.current_color] += 1
+            self.positions.append(cord)
+            print(self.levels)
+        else:
+            self.positions = [0]
+        self.current_color = color
+        return True
     def train(self, color_name, colors_from_object):
         pass
     
