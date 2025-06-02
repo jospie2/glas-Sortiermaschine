@@ -68,11 +68,11 @@ for color_pointer in range(0,3):
             path = "collected_images/brown/"
             color = "brown"
 
-    empty_image = "training_data/empty.jpg"
+    empty_image = cv2.imread("training_data/empty.jpg")[crop[0]:crop[1], crop[2]:crop[3]]
     for image_name in current_images:
         print(image_name)
 
-        frame = cv2.imread(path + image_name)[crop[0]:crop[1], crop[2]:crop[3]]
+        frame = cv2.imread(path + image_name)#[crop[0]:crop[1], crop[2]:crop[3]]
         frame_c = frame
         # Bild verarbeiten
         gray_image = cv2.cvtColor(frame_c, cv2.COLOR_BGR2GRAY)
@@ -88,15 +88,16 @@ for color_pointer in range(0,3):
         adjusted = frame_c 
         # get color values form image
         values, cords, average_background = image_processing.get_data(empty_image, frame_c, adjusted, crop)# show_option=0, last_frame=cv2.imread(empty_image)[crop[0]:crop[1], crop[2]:crop[3]])
-        process.count_obj_by_position(cords[0], color)
-        levels = process.levels()
+        print()
+        process.count_obj_by_position(color, cords[0])
+        levels = process.levels
         if not lev_neu == levels:
             print(levels)
         lev_neu = levels
             
         print(values)
-        
-
+        prediction, certainty = process.predict(values)
+        print(prediction, certainty)
         while not cv2.waitKey(1) & 0xFF == ord('a'):
             pass
         if cv2.waitKey(1) & 0xFF == ord('q'):

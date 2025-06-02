@@ -23,10 +23,13 @@ class Process:
 
 
     def count_obj_by_position(self, color, cord):
+        #print("")
+        #print(color,cord, self.positions)
+        #print("")
         if (self.positions[-1] > cord and self.current_color == color) or not self.current_color == color:
             self.levels[self.current_color] += 1
             self.positions.append(cord)
-            print(self.levels)
+            #print(self.levels)
         else:
             self.positions = [0]
         self.current_color = color

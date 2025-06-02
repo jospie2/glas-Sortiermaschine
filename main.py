@@ -210,7 +210,7 @@ while True:
         if not len(values) == 0 and not len(values[0])  == 0:
             prediction, certainty = process.predict(values)
             #print(cords[0])
-            if certainty < 50 and ((prediction == "white" and average_background[1] > 150) or (not prediction == "white" and average_background[1] > 100)):
+            if certainty < 50 and ((prediction == "white" and average_background[1] > 180) or (not prediction == "white" and average_background[1] > 100)):
                 process.count_obj_by_position(prediction, cords[0])
             levels = process.levels
             if not lev_neu == levels:
